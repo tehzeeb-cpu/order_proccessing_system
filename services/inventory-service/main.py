@@ -74,8 +74,9 @@ async def reserve_stock(
             return json.loads(cached)
         
         result = await db.execute(select(InventoryIdempotencyModel).where(InventoryIdempotencyModel.idempotency_key == idempotency_key))
-        if result.scalar_one_or_none():
-            return json.loads(result.scalar_one_or_none().response_body)
+        db_key = result.scalar_one_or_none()
+        if db_key:
+            return json.loads(db_key.response_body)
 
     # Simulated failure
     if req.fail_at in ["RESERVE_INVENTORY", "INVENTORY"]:

@@ -54,6 +54,11 @@ async def charge_payment(
         if cached:
             return json.loads(cached)
 
+        result = await db.execute(select(PaymentIdempotencyModel).where(PaymentIdempotencyModel.idempotency_key == idempotency_key))
+        db_key = result.scalar_one_or_none()
+        if db_key:
+            return json.loads(db_key.response_body)
+
     if req.fail_at in ["CHARGE_PAYMENT", "PAYMENT", "CHARGE"]:
         logger.warning(f"Simulating CHARGE_PAYMENT failure for order_id: {req.order_id}")
         raise HTTPException(status_code=400, detail=f"Simulated failure at {req.fail_at}")

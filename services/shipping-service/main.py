@@ -55,6 +55,11 @@ async def create_shipment(
         if cached:
             return json.loads(cached)
 
+        result = await db.execute(select(ShippingIdempotencyModel).where(ShippingIdempotencyModel.idempotency_key == idempotency_key))
+        db_key = result.scalar_one_or_none()
+        if db_key:
+            return json.loads(db_key.response_body)
+
     if req.fail_at in ["CREATE_SHIPMENT", "SHIPPING", "SHIPMENT"]:
         logger.warning(f"Simulating CREATE_SHIPMENT failure for order_id: {req.order_id}")
         raise HTTPException(status_code=400, detail=f"Simulated failure at {req.fail_at}")
